@@ -4,7 +4,7 @@ import javax.swing.*;
 
 
 public class Tron_Menu extends JFrame implements ActionListener {
-	JButton startButton insButton;
+	JButton startButton, insButton;
 	int page = 0;
 	JPanel instuctions;
     public Tron_Menu() {
@@ -15,11 +15,11 @@ public class Tron_Menu extends JFrame implements ActionListener {
 
     	setSize(800, 650);
     	startButton = new JButton("START");
-    	startButton.setSize(100, 50);
-    	startButton.setLocation(350, 225);
+    	startButton.setSize(150, 50);
+    	startButton.setLocation(300, 200);
     	insButton = new JButton("INSTRUCTIONS");
-    	insButto.setSize(100, 50);
-    	insButton.setLocation(350, 275);
+    	insButton.setSize(150, 50);
+    	insButton.setLocation(300, 300);
 
     	pane.add(insButton);
     	pane.add(startButton);
