@@ -90,8 +90,8 @@ class GamePanel1 extends JPanel{
     public final int width = 800, height = 600;//613
     private boolean []keys;
     private bike player, enemy;
-    private int time = 1, ms = 0;
-    private int timeChangeDir = randint(7, 15);
+    private int time = 1, ms = 0, randTimeLow = 4, randTimeHigh = 15;
+    private int timeChangeDir = randint(randTimeLow, randTimeHigh);
     public boolean ready = false;
     public GamePanel1(){
         player = new bike(50, 320, RIGHT);
@@ -129,12 +129,12 @@ class GamePanel1 extends JPanel{
             if(enemy.onBorder()){
                 enemy.addDir(enemy.borderTurn());
                 time = 0;
-                timeChangeDir = randint(10, 15);
+                timeChangeDir = randint(randTimeLow, randTimeHigh);
             }
             else{
                 enemy.changeDir();
                 time = 0;
-                timeChangeDir = randint(10, 15);
+                timeChangeDir = randint(randTimeLow, randTimeHigh);
             }
         }
     }
@@ -174,6 +174,7 @@ class bike{//CLASS MADE---------------------------------------------------------
     public final int width = 800, height = 600;
     private int x, y, xdir, ydir;
     private int dir;
+    private int leftBorderEdge = 30, rightBorderEdge = 10, topBorderEdge = 10, botBorderEdge = 5;
     private boolean yBorder = false, xBorder = true;
     private Queue<Integer> queuedMoves = new LinkedList<>();
     int curMove = 0;
@@ -258,16 +259,16 @@ class bike{//CLASS MADE---------------------------------------------------------
     }
     public void closeToBorder(){
         if(xBorder){
-            if(x < width - 25 && x > 10){
+            if(x < width - leftBorderEdge && x > rightBorderEdge){
                 xBorder = false;
             }
         }
         if(yBorder){
-            if(y < height - 25 && y > 10){
+            if(y < height - botBorderEdge && y > topBorderEdge){
                 yBorder = false;
             }
         }
-        if((x >= width - 25 || x <= 10) && !xBorder){//FIX BORDER SO ITS IN LINE WITH PLAYER
+        if((x >= width - leftBorderEdge || x <= rightBorderEdge) && !xBorder){//FIX BORDER SO ITS IN LINE WITH PLAYER
             if(y < height / 2){
                 addDir(DOWN);
             }
@@ -276,7 +277,7 @@ class bike{//CLASS MADE---------------------------------------------------------
             }
             xBorder = true;
         }
-        if((y >= height - 25 || y <= 10) && !yBorder){
+        if(y >= height - botBorderEdge || y <= topBorderEdge && !yBorder){
             if(x<width/2){
                 addDir(RIGHT);
             }
@@ -287,10 +288,10 @@ class bike{//CLASS MADE---------------------------------------------------------
         }
     }
     public boolean onBorder(){
-        if(x>= width-20 || x<=20){
+        if(x>= width-leftBorderEdge || x<=rightBorderEdge){
             return true;
         }
-        if(y>=height-20 || y<=20){
+        if(y>=height-botBorderEdge|| y<=topBorderEdge){
             return true;
         }
         return false;
