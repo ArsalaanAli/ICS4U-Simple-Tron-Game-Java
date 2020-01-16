@@ -28,14 +28,14 @@ class Tron_Menu extends JFrame implements ActionListener {
     	pane.setLayout(null);
     	setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-    	setSize(800, 650);
+    	setSize(800, 600);
     	startButton = new JButton("START");
     	startButton.setSize(150, 50);
-    	startButton.setLocation(300, 200);
+    	startButton.setLocation(325, 175);
     	startButton.addActionListener(this);
     	insButton = new JButton("INSTRUCTIONS");
     	insButton.setSize(150, 50);
-    	insButton.setLocation(300, 300);
+    	insButton.setLocation(325, 275);
     	insButton.addActionListener(this);
 
     	pane.add(insButton);
@@ -258,17 +258,17 @@ class bike{//CLASS MADE---------------------------------------------------------
     }
     public void closeToBorder(){
         if(xBorder){
-            if(x<width-20 && x>20){
+            if(x < width - 25 && x > 10){
                 xBorder = false;
             }
         }
         if(yBorder){
-            if(y<height-20 && y>20){
+            if(y < height - 25 && y > 10){
                 yBorder = false;
             }
         }
-        if((x>= width-20 || x<=20) && !xBorder){//FIX BORDER SO ITS IN LINE WITH PLAYER
-            if(y<height/2){
+        if((x >= width - 25 || x <= 10) && !xBorder){//FIX BORDER SO ITS IN LINE WITH PLAYER
+            if(y < height / 2){
                 addDir(DOWN);
             }
             else{
@@ -276,7 +276,7 @@ class bike{//CLASS MADE---------------------------------------------------------
             }
             xBorder = true;
         }
-        if((y>= height-20 || y <=20) && !yBorder){
+        if((y >= height - 25 || y <= 10) && !yBorder){
             if(x<width/2){
                 addDir(RIGHT);
             }
