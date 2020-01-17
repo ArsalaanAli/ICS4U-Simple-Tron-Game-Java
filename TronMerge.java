@@ -87,7 +87,9 @@ class Tron extends JFrame{
 }
 class GamePanel1 extends JPanel{
     public static final int LEFT = 1, RIGHT = 2, UP = 3, DOWN =4;
-    public final int width = 800, height = 600;//613
+    public static final int playerTrail = 5, enemyTrail = 6;
+    public final int width = 800, height = 600;
+    private int[][] board = new int[170][150];
     private boolean []keys;
     private boolean drawBackground = true;
     private bike player, enemy;
@@ -106,7 +108,7 @@ class GamePanel1 extends JPanel{
         requestFocus();
         ready = true;
     }
-    public void move(){//FUNCITON MADE---------------------------------------------------------------------------
+    public void move(){
        player.move();
        player.setDir();
        if(keys[KeyEvent.VK_S]){
@@ -120,7 +122,19 @@ class GamePanel1 extends JPanel{
         }
         if(keys[KeyEvent.VK_D]){
             player.addDir(RIGHT);
+       }
+       if(collide(player, enemyTrail)){
+           if(tie()){
+               System.out.println("YOU TIED");//FIX TIE DOESNT WORK=====================================================================
+           }
+           else{
+               System.out.println("YOU DIED");
+           }
         }
+       if(collide(player, playerTrail)){
+            System.out.println("YOU KYS");
+       }
+       fillBoard(player, playerTrail);
     }
     public void enemyAI(){
         enemy.move();
@@ -138,11 +152,12 @@ class GamePanel1 extends JPanel{
                 timeChangeDir = randint(randTimeLow, randTimeHigh);
             }
         }
+        fillBoard(enemy, enemyTrail);
     }
     public void paint(Graphics g){
         if(drawBackground){
             g.setColor(new Color(0, 0, 45));
-            g.fillRect(0, 0, width, height+13);//HOW TO CALL THIS ONLY ONCE????
+            g.fillRect(0, 0, width + 30, height + 30);//HOW TO CALL THIS ONLY ONCE????
             if(time>1){
                 drawBackground = false;
             }
@@ -159,6 +174,24 @@ class GamePanel1 extends JPanel{
             time++;
         }
     }
+    public void fillBoard(bike b, int trail){
+        board[b.getX()/5][b.getY()/5] = trail;
+    }
+    public boolean collide(bike b, int otherTrail){
+        if(board[b.getX()/5][b.getY()/5] == otherTrail){
+            return true;
+        }
+        return false;
+    }
+    public boolean tie(){
+        if(player.getX()/5 == enemy.getX()/5 && player.getY()/5 == enemy.getY()/5){
+            return true;
+        }
+        return false;
+    }
+
+
+
     public static int randint(int low, int high){
 		return (int)(Math.random()*(high-low+1)+low);
 	}
@@ -330,6 +363,16 @@ class bike{//CLASS MADE---------------------------------------------------------
         if(dir == DOWN){
             System.out.println("DOWN");
         }
+    }
+    //GETTER AND SETTERS(NEED TO BE MERGED)
+    //public int[] getArea(){
+
+    //}
+    public int getX(){
+        return x;
+    }
+    public int getY(){
+        return y;
     }
     public void draw(Graphics g){
         g.fillRect(x, y, 10, 10);
