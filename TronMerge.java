@@ -89,6 +89,7 @@ class GamePanel1 extends JPanel{
     public static final int LEFT = 1, RIGHT = 2, UP = 3, DOWN =4;
     public final int width = 800, height = 600;//613
     private boolean []keys;
+    private boolean drawBackground = true;
     private bike player, enemy;
     private int time = 1, ms = 0, randTimeLow = 4, randTimeHigh = 15;
     private int timeChangeDir = randint(randTimeLow, randTimeHigh);
@@ -139,12 +140,17 @@ class GamePanel1 extends JPanel{
         }
     }
     public void paint(Graphics g){
-        /*g.setColor(new Color(0, 0, 0));
-        g.fillRect(0, 0, width, height+13);//HOW TO CALL THIS ONLY ONCE????*/
+        if(drawBackground){
+            g.setColor(new Color(0, 0, 45));
+            g.fillRect(0, 0, width, height+13);//HOW TO CALL THIS ONLY ONCE????
+            if(time>1){
+                drawBackground = false;
+            }
         //BLACK BACKGROUND ADD
-        g.setColor(new Color(255, 0, 0));
+        }
+        g.setColor(new Color(187,155,252));
         player.draw(g);
-        g.setColor(new Color(0, 0, 255));
+        g.setColor(new Color(253,255,161));
         enemy.draw(g);
     }
     public void timer(){
