@@ -67,19 +67,36 @@ class Tron extends JFrame{
 		setSize(800,650);
 		javax.swing.Timer myTimer = new javax.swing.Timer(10, new TickListener());	 // trigger every 100 ms
 		myTimer.start();
-
 		game = new GamePanel1();
 		add(game);
 		setResizable(false);
 		setVisible(true);
     }
 	class TickListener implements ActionListener{
+        public static final int WIN = 1, LOSE = 2, TIE = 3;
+        private boolean running = true;
+        public int state = 0;
 		public void actionPerformed(ActionEvent evt){
 			if(game!= null && game.ready){
                 game.timer();
-                game.move();//GAME FUNCTIONS ARE CALLED
-                game.enemyAI();
-                game.repaint();
+                if(running){
+                    game.move();//GAME FUNCTIONS ARE CALLED
+                    game.enemyAI();
+                    game.repaint();
+                    if(game.checkFinished() != 0){
+                        state = game.checkFinished();
+                        if(state == WIN){
+                            System.out.println("WIN");
+                        }
+                        if(state == LOSE){
+                            System.out.println("LOSE");
+                        }
+                        if(state == TIE){
+                            System.out.println("TIE");
+                        }
+                        running = false;
+                    }
+                }
 			}
 		}
 	}
@@ -87,10 +104,12 @@ class Tron extends JFrame{
 }
 class GamePanel1 extends JPanel{
     public static final int LEFT = 1, RIGHT = 2, UP = 3, DOWN =4;
+    public static final int WIN = 1, LOSE = 2, TIE = 3;
     public static final int playerTrail = 5, enemyTrail = 6;
     public final int width = 800, height = 600;
     private int[][] board = new int[170][150];
     private boolean []keys;
+    private boolean playerDead = false, enemyDead = false, tie = false;
     private boolean drawBackground = true;
     private bike player, enemy;
     private int time = 1, ms = 0, randTimeLow = 4, randTimeHigh = 15;
@@ -125,20 +144,21 @@ class GamePanel1 extends JPanel{
        }
        if(collide(player, enemyTrail)){
            if(tie()){
-               System.out.println("YOU TIED");//FIX TIE DOESNT WORK=====================================================================
+               tie = true;
            }
            else{
-               System.out.println("YOU DIED");
+               playerDead = true;
            }
         }
        if(collide(player, playerTrail)){
-            System.out.println("YOU KYS");
+            playerDead = true;
        }
        fillBoard(player, playerTrail);
     }
     public void enemyAI(){
         enemy.move();
         enemy.setDir();
+        
         enemy.closeToBorder();
         if(time >= timeChangeDir){
             if(enemy.onBorder()){
@@ -152,16 +172,26 @@ class GamePanel1 extends JPanel{
                 timeChangeDir = randint(randTimeLow, randTimeHigh);
             }
         }
+        if(collide(enemy, playerTrail)){
+            if(tie()){
+                tie = true;
+            }
+            else{
+                enemyDead = true;
+            }
+         }
+        if(collide(enemy, enemyTrail)){
+             enemyDead = true;
+        }
         fillBoard(enemy, enemyTrail);
     }
     public void paint(Graphics g){
         if(drawBackground){
             g.setColor(new Color(0, 0, 45));
-            g.fillRect(0, 0, width + 30, height + 30);//HOW TO CALL THIS ONLY ONCE????
+            g.fillRect(0, 0, width + 30, height + 30);
             if(time>1){
                 drawBackground = false;
             }
-        //BLACK BACKGROUND ADD
         }
         g.setColor(new Color(187,155,252));
         player.draw(g);
@@ -189,7 +219,18 @@ class GamePanel1 extends JPanel{
         }
         return false;
     }
-
+    public int checkFinished(){
+        if(tie){
+            return TIE;
+        }
+        else if(playerDead){
+            return LOSE;
+        }
+        else if(enemyDead){
+            return WIN;
+        }
+        return 0;
+    }
 
 
     public static int randint(int low, int high){
@@ -307,7 +348,7 @@ class bike{//CLASS MADE---------------------------------------------------------
                 yBorder = false;
             }
         }
-        if((x >= width - leftBorderEdge || x <= rightBorderEdge) && !xBorder){//FIX BORDER SO ITS IN LINE WITH PLAYER
+        if((x >= width - leftBorderEdge || x <= rightBorderEdge) && !xBorder){
             if(y < height / 2){
                 addDir(DOWN);
             }
