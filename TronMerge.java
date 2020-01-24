@@ -14,12 +14,11 @@ public class TronMerge {
 
     public static void main(String [] args){
     	Tron_Menu frame = new Tron_Menu();
-
     }
 }
 
 class Tron_Menu extends JFrame implements ActionListener {
-	JButton startButton, insButton;
+	JButton startButton, insButton, start2Button;
 	int page = 0;
 	JPanel instuctions;
     public Tron_Menu() {
@@ -29,17 +28,21 @@ class Tron_Menu extends JFrame implements ActionListener {
     	setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
     	setSize(800, 600);
-    	startButton = new JButton("START");
+    	startButton = new JButton("1 Player");
     	startButton.setSize(150, 50);
     	startButton.setLocation(325, 175);
     	startButton.addActionListener(this);
-    	insButton = new JButton("INSTRUCTIONS");
+        start2Button = new JButton("2 Players");
+        start2Button.setSize(150, 50);
+    	start2Button.setLocation(325, 275);
+    	start2Button.addActionListener(this);
+        insButton = new JButton("INSTRUCTIONS");
     	insButton.setSize(150, 50);
-    	insButton.setLocation(325, 275);
+    	insButton.setLocation(325, 375);
     	insButton.addActionListener(this);
-
     	pane.add(insButton);
-    	pane.add(startButton);
+        pane.add(startButton);
+        pane.add(start2Button);
 
     	setVisible(true);
     }
@@ -48,8 +51,13 @@ class Tron_Menu extends JFrame implements ActionListener {
     	if(ev.getSource() == startButton){
     		page = 1;
     		setVisible(false);
-    		Tron gameFrame = new Tron();
-    	}
+    		Tron gameFrame = new Tron(1);
+        }
+        if(ev.getSource() == start2Button){
+    		page = 1;
+    		setVisible(false);
+    		Tron gameFrame = new Tron(2);
+        }
     	else if(ev.getSource() == insButton){
     		page = 2;
     		//instuctions.setVisible(true);
@@ -59,15 +67,17 @@ class Tron_Menu extends JFrame implements ActionListener {
 
 class Tron extends JFrame{
     javax.swing.Timer myTimer;
-	GamePanel1 game;
+    GamePanel1 game;
+    private int players;
 
-    public Tron() {
+    public Tron(int players) {
 		super("Tron");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setSize(800,650);
-		javax.swing.Timer myTimer = new javax.swing.Timer(10, new TickListener());	 // trigger every 100 ms
-		myTimer.start();
-		game = new GamePanel1();
+        setSize(800,650);
+        this.players = players;
+		javax.swing.Timer myTimer = new javax.swing.Timer(15, new TickListener());
+        myTimer.start();
+		game = new GamePanel1(players);
 		add(game);
 		setResizable(false);
 		setVisible(true);
@@ -80,8 +90,13 @@ class Tron extends JFrame{
 			if(game!= null && game.ready){
                 game.timer();
                 if(running){
-                    // game.move();//GAME FUNCTIONS ARE CALLED
-                    game.enemyAI();
+                    game.move();//GAME FUNCTIONS ARE CALLED
+                    if(players == 1){
+                        game.enemyAI();
+                    }
+                    else{
+                        game.enemyMove();
+                    }
                     game.repaint();
                     if(game.checkFinished() != 0){
                         state = game.checkFinished();
@@ -117,9 +132,9 @@ class GamePanel1 extends JPanel{
     private int timeChangeDir = randint(15, 20);
     public boolean ready = false;
     private int[] otherTurns = {0, RIGHT, LEFT, DOWN, UP};
-    public GamePanel1(){
+    public GamePanel1(int players){
         player = new bike(50, 320, RIGHT);
-        enemy = new bike(600, 320, LEFT);
+        enemy = new bike(650, 320, LEFT);
         keys = new boolean[KeyEvent.KEY_LAST+1];
         addKeyListener(new moveListener());
         setSize(800,600);
@@ -160,6 +175,37 @@ class GamePanel1 extends JPanel{
        }
        fillBoard(player, playerTrail);
     }
+    public void enemyMove(){
+        if(keys[KeyEvent.VK_DOWN]){
+            enemy.addDir(DOWN);
+        }
+        if(keys[KeyEvent.VK_LEFT]){
+         enemy.addDir(LEFT);
+         }
+         if(keys[KeyEvent.VK_UP]){
+            enemy.addDir(UP);
+         }
+         if(keys[KeyEvent.VK_RIGHT]){
+            enemy.addDir(RIGHT);
+        }
+        enemy.setDir();
+        enemy.move();
+        if (enemy.hitEdgde()){
+            enemyDead = true;
+        }
+        if(collide(enemy, playerTrail)){
+            if(tie()){
+                tie = true;
+            }
+            else{
+                enemyDead = true;
+            }
+         }
+        if(collide(enemy, enemyTrail)){
+             enemyDead = true;
+        }
+        fillBoard(enemy, enemyTrail);
+     }
     public void enemyAI(){
         enemyDetection();
         enemy.closeToBorder();
@@ -197,7 +243,6 @@ class GamePanel1 extends JPanel{
         } 
         fillBoard(enemy, enemyTrail);
     }
-
 
     public void paint(Graphics g){
         if(drawBackground){
@@ -272,12 +317,10 @@ class GamePanel1 extends JPanel{
     }
     public boolean safeToTurn(int dc){
         boolean stt = true;
-        // System.out.println(dc +" TURNING");
         //FINISH: SEE IF SAFE TO RANDOMLY TURN
         int potentialX = xSpeed(dc);
         int potentialY = ySpeed(dc);
         for(int i = 1; i<=4; i++){
-            // System.out.println((enemy.getX()+potentialX*i)/5 + " " + (enemy.getY()+potentialY*i)/5);
             if(board[(enemy.getX()+potentialX*i)/5][(enemy.getY()+potentialY*i)/5] != 0){
                 stt = false;
                 break;
@@ -326,7 +369,7 @@ class bike{//CLASS MADE---------------------------------------------------------
     public final int width = 800, height = 600;
     private int x, y, xdir, ydir;
     private int dir;
-    private int leftBorderEdge = 20, rightBorderEdge = 20, topBorderEdge = 20, botBorderEdge = 20;
+    private int leftBorderEdge = 30, rightBorderEdge = 30, topBorderEdge = 30, botBorderEdge = 30;
     private boolean yBorder = false, xBorder = true;
     // private Queue<Integer> queuedMoves = new LinkedList<>();
     private int moveFrame = 0;
@@ -353,19 +396,9 @@ class bike{//CLASS MADE---------------------------------------------------------
         curMove = d;
     }
     public void setDir(){//CHANGEED MOVEMENTS (MERGE)
-        // if(curMove == 0){
-        //     if(queuedMoves.size()>0){
-        //         curMove = queuedMoves.remove();
-        //     }
-        //     else{
-        //         return;
-        //     }
-        // }
-        System.out.println(curMove);
         if(curMove == 0){
             return;
         }
-
         if(curMove == LEFT || curMove == RIGHT){
             if(y%pixelOffset==0){
                 dirChange(curMove);
@@ -380,7 +413,6 @@ class bike{//CLASS MADE---------------------------------------------------------
         }
     }
     public void dirChange(int d){
-        System.out.println(d);
         if(d==LEFT && dir != RIGHT){
             xdir = -speed;
             ydir = 0;
@@ -401,9 +433,6 @@ class bike{//CLASS MADE---------------------------------------------------------
             xdir = 0;
             dir = DOWN;
         }
-        else if(d ==-1){
-            // System.out.println("ERROR, UNABLE TO GET WHICH BORDER THE ENEMY IS ON");
-        }
     }
     public int changeDir(){
         int ch = randint(0, 1);
@@ -413,9 +442,6 @@ class bike{//CLASS MADE---------------------------------------------------------
         }
         else if(dir == LEFT || dir == RIGHT){
             dchange = (ch == 0) ? UP:DOWN;
-        }
-        if(dchange == 0){
-            // System.out.println("ERROR, UNABLE TO GET WHICH DIRECTION THE ENEMY IS ON");
         }
         return dchange;
     }
@@ -431,37 +457,29 @@ class bike{//CLASS MADE---------------------------------------------------------
             }
         }
         if((x >= width - rightBorderEdge || x <= leftBorderEdge) && !xBorder){
-            System.out.println("BORDER TURN");
             if(y < height / 2){  
                 addDir(DOWN);
-                System.out.println("TURNING DOWN");
             }
             else{
                 addDir(UP);
-                System.out.println("TURNING UP");
             }
             xBorder = true;
         }
-        // System.out.println(y + " " + (height-botBorderEdge));
         else if(y >= height - botBorderEdge || y <= topBorderEdge && !yBorder){
             if(x<width/2){
                 addDir(RIGHT);
-                System.out.println("TURNING RIGHT");
             }
             else{
-                System.out.println("TURNING LEFT");
                 addDir(LEFT);
             }
             yBorder = true;
         }
     }
     public boolean onBorder(){
-        if(x>= width-leftBorderEdge || x<=rightBorderEdge){
-            System.out.println("X BORDER");
+        if(x>= width-leftBorderEdge-5 || x<=rightBorderEdge){
             return true;
         }
-        if(y>=height-botBorderEdge|| y<=topBorderEdge){
-            System.out.println("Y BORDER");
+        if(y>=height-botBorderEdge-5|| y<=topBorderEdge){
             return true;
         }
         return false;
@@ -495,12 +513,7 @@ class bike{//CLASS MADE---------------------------------------------------------
             System.out.println("DOWN");
         }
     }
-    //GETTER AND SETTERS(NEED TO BE MERGED)
-    //public int[] getArea(){
-
-    //}
     public boolean hitEdgde(){
-        System.out.println(x);
         if(x<5 || x> width-5 || y<5 || y>height-5){
             return true;
         }
