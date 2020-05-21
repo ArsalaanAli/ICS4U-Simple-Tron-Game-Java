@@ -36,13 +36,9 @@ class Tron_Menu extends JFrame implements ActionListener {
     	startButton.addActionListener(this);
         start2Button = new JButton("2 Players");
         start2Button.setSize(150, 50);
-    	start2Button.setLocation(325, 240);
+    	start2Button.setLocation(525, 240);
     	start2Button.addActionListener(this);
-        insButton = new JButton("INSTRUCTIONS");
-    	insButton.setSize(150, 50);
-    	insButton.setLocation(525, 240);
-    	insButton.addActionListener(this);
-    	pane.add(insButton);
+
         pane.add(startButton);
         pane.add(start2Button);
         
@@ -99,7 +95,7 @@ class Tron extends JFrame{
 			if(game!= null && game.ready){
                 game.timer();
                 if(running){
-                    // game.move();//function for moving player
+                    game.move();//function for moving player
                     if(players == 1){
                         game.enemyAI();//enemy ai is run if selected 1-player option
                     }
@@ -110,15 +106,21 @@ class Tron extends JFrame{
                     if(game.checkFinished() != 0){//IF A GAME FINISHING EVENT HAS OCCURED
                         state = game.checkFinished();
                         if(state == WIN){
-                            System.out.println("WIN");
+                            if(game.pause()){
+                                game.reset();
+                            }  
                         }
                         if(state == LOSE){
-                            System.out.println("LOSE");          
+                            if(game.pause()){
+                                game.reset();
+                            }  
+                            
                         }
                         if(state == TIE){
-                            System.out.println("TIE");         
+                            if(game.pause()){
+                                game.reset();
+                            }  
                         }
-                        running = false;
                     }
                 }
 			}
@@ -134,11 +136,12 @@ class GamePanel1 extends JPanel{
     public final int width = 800, height = 600;
     private int[][] board = new int[170][150];//board used for collision points
     private boolean []keys;
-    private boolean playerDead = false, enemyDead = false, tie = false;
+    private boolean playerDead = false, enemyDead = false, tie = false, printed = true;
     private boolean drawBackground = true;
     private bike player, enemy;
-    private int time = 1, ms = 0, randTimeLow = 5, randTimeHigh = 15;
-    private int timeChangeDir = randint(15, 20);//timer that randomly goes off
+    private int time = 1, ms = 0, randTimeLow = 5, randTimeHigh = 15, playerScore = 0, enemyScore = 0;
+    private int pauseTimer = 0;
+    private int timeChangeDir = randint(5, 10);//timer that randomly goes off
     public boolean ready = false;
     private int[] otherTurns = {0, RIGHT, LEFT, DOWN, UP};//array with the opposite turn for each index of turns
     public GamePanel1(int players){
@@ -152,6 +155,53 @@ class GamePanel1 extends JPanel{
         super.addNotify();
         requestFocus();
         ready = true;
+    }
+    public void printState(){
+        if (tie){
+            System.out.println("TIE!");
+        }
+        if(enemyDead){
+            System.out.println("PLAYER 1 WINS");
+            playerScore++;
+        }
+        if(playerDead){
+            System.out.println("PLAYER 2 WINS");
+            enemyScore++;
+        }
+    }
+    public boolean pause(){
+        if(printed){
+            printState();
+            printed = false;
+        }
+        enemy.pause();
+        player.pause();
+        pauseTimer++;
+        if(anyBoolean(keys)){
+            return true;
+        }
+        return false;
+    }
+    public boolean anyBoolean(boolean[] array){
+        for(boolean b: array){
+            if (b == true){
+                return true;
+            }
+        }
+        return false;
+    }
+    public void reset(){
+        board = new int[170][150];
+        player = new bike(50, 320, RIGHT);
+        enemy = new bike(650, 320, LEFT);
+        backDelay = 0;
+        pauseTimer = 0;
+        timeChangeDir = randint(5, 10);//timer that randomly goes off
+        drawBackground = true;
+        playerDead = false;
+        enemyDead = false;
+        printed = true;
+        tie = false;
     }
     public void move(){
        if(keys[KeyEvent.VK_S]){//setting player's direction based on input
@@ -220,15 +270,12 @@ class GamePanel1 extends JPanel{
         enemy.closeToBorder();//checks to see if player is getting too close to border, if so turn is made
         if(time >= timeChangeDir){//when random turn timer goes off
             if(enemy.onBorder()){//checks to see if enemy is travelling along border
-                System.out.println("BORDER TURN");
                 int dc = enemy.borderTurn();//turns away from border
-                System.out.println(dc);
                 enemy.addDir(dc);
                 time = 0;
                 timeChangeDir = randint(randTimeLow, randTimeHigh);
             }
             else{
-                System.out.println("Random turn");
                 int dc = enemy.randomDir();//if not on border, then randomly turns
                 if (safeToTurn(dc)){
                     enemy.addDir(dc);
@@ -237,6 +284,7 @@ class GamePanel1 extends JPanel{
                 timeChangeDir = randint(randTimeLow, randTimeHigh);//reset random turn timer
             }
         }
+        enemyDetection();//checks to see if path is clear, or turn needs to be made
         enemy.setDir();//repeadetly checks if player can turn
         enemy.move();//moves the rect of the enemy
         if(collide(enemy, playerTrail)){//checks to see if enemy has collided with player
@@ -269,6 +317,7 @@ class GamePanel1 extends JPanel{
         player.draw(g);//drawing player
         g.setColor(new Color(253, 255,161));
         enemy.draw(g);//drawing enemy
+        g.drawString( ("Player: " + playerScore + "       Enemy:" + enemyScore), 300, 10);
     }
     public void timer(){
         ms++;
@@ -304,6 +353,9 @@ class GamePanel1 extends JPanel{
         return 0;
     }
     public void enemyDetection(){
+        if((enemy.getX()+enemy.getxDir()*4)/5 <0 ||(enemy.getY()+enemy.getyDir()*4)/5< 0){
+            return;
+        }
         if(board[(enemy.getX()+enemy.getxDir()*4)/5][(enemy.getY()+enemy.getyDir()*4)/5] != 0){//looks ahead 4 points to see if path is clear
             int dc = enemy.randomDir();//gets randome direction
                 if (safeToTurn(dc)){
@@ -327,7 +379,10 @@ class GamePanel1 extends JPanel{
         boolean stt = true;
         int potentialX = xSpeed(dc);
         int potentialY = ySpeed(dc);//gets xdir and ydir for dc
-        for(int i = 1; i<=4; i++){
+        for(int i = 1; i<=8; i++){
+            if((enemy.getX()+potentialX*i)/5 <0 ||(enemy.getY()+potentialY*i)/5 <0){
+                continue;
+            }
             if(board[(enemy.getX()+potentialX*i)/5][(enemy.getY()+potentialY*i)/5] != 0){//checks if 4 squares in that direction are safe 
                 stt = false;
                 break;
@@ -376,8 +431,8 @@ class bike{//CLASS MADE---------------------------------------------------------
     public final int width = 800, height = 600;
     private int x, y, xdir, ydir;
     private int dir;
-    private int leftBorderEdge = 30, rightBorderEdge = 30, topBorderEdge = 30, botBorderEdge = 30;
-    private boolean yBorder = false, xBorder = true;
+    private int leftBorderEdge = 30, rightBorderEdge = 30, topBorderEdge = 20, botBorderEdge = 30;
+    private boolean yBorder = false, xBorder = true, moveable = true;
     // private Queue<Integer> queuedMoves = new LinkedList<>();
     private int moveFrame = 0;
     private int curMove = 0;
@@ -395,10 +450,15 @@ class bike{//CLASS MADE---------------------------------------------------------
         }
     }
     public void move(){//increases bike's position by speed in that direction
-        x+=xdir;
-        y+=ydir;
-        System.out.println(x);
-        
+        if(moveable) {
+            x+=xdir;
+            y+=ydir;            
+        }
+    }
+    public void pause(){
+        xdir = 0;
+        ydir = 0;
+        moveable = false;
     }
     public void addDir(int d){//used to prompt change in direction
         curMove = d;
@@ -464,8 +524,44 @@ class bike{//CLASS MADE---------------------------------------------------------
                 yBorder = false;
             }
         }
+        
+        if((x <= leftBorderEdge+10 && y<= topBorderEdge+10)){//EDGE CASES FOR CORNERS
+            if(dir == UP){
+                addDir(RIGHT);
+            }
+            else{
+                addDir(DOWN);
+            }
+            return;
+        }
+        if((x >= width - rightBorderEdge-10 && y >= height - botBorderEdge)){
+            if(dir == DOWN){
+                addDir(LEFT);
+            }
+            else{
+                addDir(UP);
+            }
+            return;
+        }
+        if((x <= leftBorderEdge+10 && y >= height - botBorderEdge)){
+            if(dir == DOWN){
+                addDir(RIGHT);
+            }
+            else{
+                addDir(UP);
+            }
+            return;
+        }
+        if((x >= width - rightBorderEdge-10 &&  y<= topBorderEdge+10)){
+            if(dir == RIGHT){
+                addDir(DOWN);
+            }
+            else{
+                addDir(LEFT);
+            }
+            return;
+        }
         if((x >= width - rightBorderEdge-10 || x <= leftBorderEdge+10) && !xBorder){//checks if on border of screen, if so turns the bike
-            System.out.println("border turn2");
             if(y < height / 2){  
                 addDir(DOWN);
             }
@@ -474,8 +570,7 @@ class bike{//CLASS MADE---------------------------------------------------------
             }
             xBorder = true;
         }
-        else if(y >= height - botBorderEdge || y <= topBorderEdge && !yBorder){
-            System.out.println("border turn2");
+        else if((y >= height - botBorderEdge || y <= topBorderEdge) && !yBorder){
             if(x<width/2){
                 addDir(RIGHT);
             }
@@ -492,9 +587,39 @@ class bike{//CLASS MADE---------------------------------------------------------
         return false;
     }
     public int borderTurn(){//returns direction to turn if on border
-        System.out.println(x + " " + (width - rightBorderEdge) + " " + leftBorderEdge);
-        if((x >= width - rightBorderEdge || x <= leftBorderEdge) && !xBorder){//checks if on border of screen, if so turns the bike
-            System.out.println("border turn2");
+        if((x <= leftBorderEdge+10 && y<= topBorderEdge+10)){//EDGE CASES FOR CORNERS
+            if(dir == UP){
+                return RIGHT;
+            }
+            else{
+                return DOWN;
+            }
+        }
+        if((x >= width - rightBorderEdge-10 && y >= height - botBorderEdge)){
+            if(dir == DOWN){
+                return LEFT;
+            }
+            else{
+                return UP;
+            }
+        }
+        if((x <= leftBorderEdge+10 && y >= height - botBorderEdge)){
+            if(dir == DOWN){
+                return RIGHT;
+            }
+            else{
+                return UP;
+            }
+        }
+        if((x >= width - rightBorderEdge-10 &&  y<= topBorderEdge+10)){
+            if(dir == RIGHT){
+                return DOWN;
+            }
+            else{
+                return LEFT;
+            }
+        }
+        if((x >= width - rightBorderEdge-10 || x <= leftBorderEdge+10)){//checks if on border of screen, if so turns the bike
             if(y < height / 2){  
                 return DOWN;
             }
@@ -503,7 +628,6 @@ class bike{//CLASS MADE---------------------------------------------------------
             }
         }
         else if(y >= height - botBorderEdge || y <= topBorderEdge && !yBorder){
-            System.out.println("border turn2");
             if(x<width/2){
                 return RIGHT;
             }
@@ -514,7 +638,7 @@ class bike{//CLASS MADE---------------------------------------------------------
         return 0;
     }
     public boolean hitEdgde(){//returns if bike has hit the edge of the screen
-        if(x<5 || x> width-5 || y<5 || y>height-5){
+        if(x<10 || x> width-10 || y<10 || y>height-10){
             return true;
         }
         return false;
